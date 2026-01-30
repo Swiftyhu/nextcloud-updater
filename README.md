@@ -1,10 +1,25 @@
-# Nextcloud Updater
+# Nextcloud Updater 🔄☁️
 
 A simple bash script to automate Nextcloud updates and maintenance tasks.
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![ShellCheck](https://github.com/Swiftyhu/nextcloud-updater/actions/workflows/shellcheck.yml/badge.svg)
+![License](https://img.shields.io/github/license/Swiftyhu/nextcloud-updater)
+![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-blue)
 
 ![screenshot](./doc/screenshot.png)
+
+## ⚠️ IMPORTANT – Read Before Using
+
+This script is intended for **classic / tarball-based Nextcloud installations**
+(e.g. /var/www/nextcloud).
+
+It is **NOT suitable** for:
+
+- Docker-based installations
+- Snap packages
+- Nextcloud AIO
+
+If you are using those, follow the official update mechanism instead.
 
 ## Features
 
@@ -16,13 +31,14 @@ A simple bash script to automate Nextcloud updates and maintenance tasks.
 - Automatic cleanup of “extra files” that may remain after a Nextcloud update
 - Trashbin and version cleanup
 
-## Prerequisites
+## 📦 Prerequisites
 
 - Linux server with Nextcloud installed
 - Root or sudo access
 - Required packages: `wget`, `unzip`, `jq`, `mysql-client`, `php-cli`, `sudo`
+- Database authentication must be configured (e.g. via ~/.my.cnf).
 
-## Installation
+## 🚀 Quickstart / Installation
 
 ```bash
 cd /var/www  # or wherever your nextcloud directory is located
@@ -32,33 +48,73 @@ chmod +x update.sh
 
 **Important**: Place the script in the parent directory of your `nextcloud/` folder or define the `--nextcloud-dir` parameter.
 
-## Usage
+Example:
 
-### Update to a specific version:
-```bash
-sudo ./update.sh 31.2.0
+```text
+/var/www/
+ ├─ nextcloud/
+ └─ update.sh
 ```
 
-### Maintenance only (no version update):
+## 🧰 Usage
+
 ```bash
+./update.sh [version] [options]
+```
+
+| Option                | Description         | Default     |
+| --------------------- | ------------------- | ----------- |
+| `--web-user USER`     | Web server user     | `www-data`  |
+| `--web-group GROUP`   | Web server group    | `www-data`  |
+| `--db-name NAME`      | Database name       | `nextcloud` |
+| `--nextcloud-dir DIR` | Nextcloud directory | `nextcloud` |
+| `-h`, `--help`        | Show help           |             |
+
+### Examples
+
+```bash
+# Maintenance only (no version update)
 sudo ./update.sh
+
+# Update to a specific version
+sudo ./update.sh 31.2.0
+
+# Custom web user and group
+sudo ./update.sh 31.2.0 --web-user nginx --web-group nginx
+
+# Custom database name
+sudo ./update.sh 31.2.0 --db-name nc_prod
+
+# Show help
+sudo ./update.sh --help
 ```
 
-### With custom configuration:
-```bash
-sudo ./update.sh 31.2.0 --web-user nginx --db-name my_nextcloud
-```
+### 🧪 Recommended upgrade workflow
 
-### Show help:
-```bash
-./update.sh --help
-```
+- Create full backups (database + files)
+- Run the script with the target version
+- Verify:
+  - Web UI
+  - `occ status`
+- Keep backups until you are confident everything works
+
+### 🧯 Rollback / Recovery
+
+If something goes wrong, you should restore:
+
+- Database dump
+- `config.php`
+- Previous Nextcloud code directory
+- Data directory (if affected)
+
+🚨 Rollback is **your responsibility.** 🚨
 
 ## Configuration
 
 You can configure the script in two ways:
 
 ### 1. Edit the configuration section (lines 33-38):
+
 ```bash
 WEB_USER="www-data"       # Your web server user
 WEB_GROUP="www-data"      # Your web server group
@@ -69,6 +125,7 @@ FILE_PERMS="640"          # File permissions
 ```
 
 ### 2. Use command line options:
+
 ```bash
 --web-user USER       # Web server user (default: www-data)
 --web-group GROUP     # Web server group (default: www-data)
@@ -77,31 +134,61 @@ FILE_PERMS="640"          # File permissions
 ```
 
 **Example**: If you're using nginx with a different group and your database is named `nc_db`:
+
 ```bash
 sudo ./update.sh 31.2.0 --web-user nginx --web-group www-data --db-name nc_db
 ```
 
-## What it does
+## ✅ What it does 
 
 1. Downloads and extracts the specified Nextcloud version (if version given)
 2. Sets proper file permissions (750 for directories, 640 for files)
 3. Runs `occ upgrade`
-4. Database maintenance tasks
+4. Database maintenance tasks - Fixes database schema issues (missing indices, columns, primary keys)
 5. Trashbin and version cleanup
 6. Integrity checks for core and apps (removes extra files)
 7. Updates all apps
 8. Runs maintenance repair and system checks
 
-## Warning
+## ❌ What it DOES NOT DO
 
-⚠️ **ALWAYS BACKUP YOUR DATA BEFORE RUNNING THIS SCRIPT**
+1. It does NOT create backups
+2. It does NOT guarantee a successful upgrade
+3. It does NOT support Docker / Snap / AIO installations
+4. It does NOT magically fix broken custom apps
 
-This script makes significant changes to your Nextcloud installation. Make sure you have:
+## ⚠️ Warning ⚠️ **ALWAYS BACKUP YOUR DATA BEFORE RUNNING THIS SCRIPT**
+
+🚨 Backup is NOT optional. This script makes significant changes to your Nextcloud installation. Make sure you have:
+
 - Database backup
 - Files backup
 - Test in staging environment first
 
-## License
+## 🤝 Contributing
+
+Pull requests are welcome.
+
+Please keep changes:
+
+- focused
+
+- documented
+
+- compatible with classic Nextcloud installations
+
+## 🛑 Support policy
+
+This script is provided **“as is”**, without any warranty.
+
+Issues are welcome, but there is no guaranteed support.
+
+## 📝 Output and logging
+
+The script prints timestamped log messages to STDERR.
+Long-running steps (database fixes, integrity checks) may take several minutes.
+
+## 📜 License
 
 GPL-3.0
 

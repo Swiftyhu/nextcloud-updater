@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the README first
+    url: https://github.com/Swiftyhu/nextcloud-updater#readme
+    about: Please verify supported installation types and requirements before opening an issue.
+  - name: Nextcloud documentation
+    url: https://docs.nextcloud.com/
+    about: Official documentation (recommended for Docker / Snap / AIO installations).

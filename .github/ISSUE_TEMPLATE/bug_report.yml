@@ -1,0 +1,104 @@
+name: Bug report
+description: Report a problem with the script (classic/tarball installs only).
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue.
+
+        ⚠️ This script supports **classic / tarball-based** Nextcloud installs only.
+        Docker / Snap / AIO are **not supported**.
+
+  - type: dropdown
+    id: install_type
+    attributes:
+      label: Installation type
+      options:
+        - Classic / tarball-based (supported)
+        - Docker (NOT supported)
+        - Snap (NOT supported)
+        - Nextcloud AIO (NOT supported)
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: nextcloud_version
+    attributes:
+      label: Nextcloud version (before running the script)
+      placeholder: "e.g. 31.0.2"
+    validations:
+      required: true
+
+  - type: input
+    id: target_version
+    attributes:
+      label: Target version (if any)
+      placeholder: "e.g. 31.2.0 or leave empty for maintenance-only"
+
+  - type: input
+    id: os
+    attributes:
+      label: OS / distribution
+      placeholder: "e.g. Debian 12 / Ubuntu 22.04 / RHEL 9"
+    validations:
+      required: true
+
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP CLI version
+      placeholder: "Output of: php -v"
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command you ran
+      description: Paste the exact command line you used.
+      placeholder: |
+        sudo ./update.sh 31.2.0 --web-user www-data --db-name nextcloud
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "What did you expect to happen?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: "What actually happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: |
+        Paste the full relevant output. Remove sensitive data.
+        Tip: Run with `2>&1 | tee update.log` to capture everything.
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: backups
+    attributes:
+      label: Safety checks
+      options:
+        - label: I have a database backup.
+          required: true
+        - label: I have a backup of config.php.
+          required: true
+        - label: I have a rollback plan for the code directory.
+          required: true

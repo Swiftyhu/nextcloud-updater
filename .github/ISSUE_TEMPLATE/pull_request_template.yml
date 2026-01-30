@@ -1,0 +1,17 @@
+## What changed?
+- 
+
+## Why?
+- 
+
+## How was this tested?
+- [ ] `bash -n update.sh`
+- [ ] `shellcheck update.sh`
+- [ ] `shfmt -i 2 -ci -sr -w update.sh` (or `-d` for check)
+
+## Checklist
+- [ ] No Docker/Snap/AIO support added
+- [ ] Changes are documented (README / comments if needed)
+- [ ] Output/logging remains clear
+- [ ] No regressions introduced
+- [ ] Tested on a non-production instance

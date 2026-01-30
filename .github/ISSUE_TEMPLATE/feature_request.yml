@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest an improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please keep this project focused on **classic / tarball-based** Nextcloud installs.
+        Requests for Docker/Snap/AIO support will be declined.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve?
+      placeholder: "I want the script to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to change/add?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative approach you considered?
+      placeholder: "I tried..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope agreement
+      options:
+        - label: This request is for classic/tarball installs (not Docker/Snap/AIO).
+          required: true
