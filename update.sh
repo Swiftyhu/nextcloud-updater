@@ -45,7 +45,7 @@ COLOR_YELLOW=""
 COLOR_RESET=""
 : "${NO_COLOR:=}"
 
-[ -t 1 -o -n "${NO_COLOR}" ] && {
+[ -t 1 ] && [ -z "${NO_COLOR}" ] && {
   ESC="$(printf '\033')"
   COLOR_BLUE="${ESC}[1;34m"
   COLOR_GREEN="${ESC}[1;32m"
@@ -63,9 +63,9 @@ _print() {
   printf '%s%s [%s] %s: %s%s\n' "${color}" "$(date '+%Y-%m-%dT%H:%M:%S%z')" "${level}" "${SCRIPT_NAME}" "${*}" "${COLOR_RESET}" >&2
   }
 
-_ok() {
-  _print "    OK" "${COLOR_GREEN}" "$@"
-  }
+#_ok() {
+#  _print "    OK" "${COLOR_GREEN}" "$@"
+#  }
 
 _info() {
   _print "  INFO" "${COLOR_BLUE}" "$@"
@@ -101,10 +101,11 @@ _maintenance_disable() {
   MAINTENANCE_ENABLED=0
   }
 
+# shellcheck disable=SC2329 # TRAP function
 _cleanup() {
   rc=${?}
   _maintenance_disable
-  cd - >/dev/null
+  cd - >/dev/null || true
   exit "${rc}"
   }
 
@@ -160,18 +161,19 @@ while [[ ${#} -gt 0 ]];
   _warn "No version specified..."
   _warn "Only maintenance will be done..."
   _info "Usage: ${SCRIPT_NAME} [version] [options]"
-  } || {
-  wget https://download.nextcloud.com/server/releases/nextcloud-${VERSION}.zip || _warn "Failed to download version ${VERSION}"
+  }
+[ -n "${VERSION}" ] && {
+  wget "https://download.nextcloud.com/server/releases/nextcloud-${VERSION}.zip" || _warn "Failed to download version ${VERSION}"
   [ -s "./nextcloud-${VERSION}.zip" ] && {
     unzip -o "./nextcloud-${VERSION}.zip"
     rm "./nextcloud-${VERSION}.zip"
     }
   }
 
-[ -z "${NEXTCLOUD_DIR}" ] && _err 'Directory is not specified!!!'
-[ -d "${NEXTCLOUD_DIR}" ] || _err 'Directory not accessible: "'${NEXTCLOUD_DIR}'"'
+[ -z "${NEXTCLOUD_DIR}" ] && _err "Directory is not specified!!!"
+[ -d "${NEXTCLOUD_DIR}" ] || _err "Directory not accessible: \"${NEXTCLOUD_DIR}\""
 
-cd -- "${NEXTCLOUD_DIR}"
+cd -- "${NEXTCLOUD_DIR}" || _err "Failed to change directory to \"${NEXTCLOUD_DIR}\""
 MAINTENANCE_ENABLED=0
 trap _cleanup EXIT
 
@@ -181,7 +183,7 @@ occ="sudo -u ${WEB_USER} php --define apc.enable_cli=1 occ"
 
 _maintenance_enable
 _info "Setting permissions..."
-chown -Rc ${WEB_USER}:${WEB_GROUP} .
+chown -Rc "${WEB_USER}":"${WEB_GROUP}" .
 find ./ -type d ! -perm ${DIR_PERMS} -exec chmod -c ${DIR_PERMS} "{}" \;
 find ./ -type f ! -perm ${FILE_PERMS} -exec chmod -c ${FILE_PERMS} "{}" \;
 _maintenance_disable
@@ -197,7 +199,7 @@ _info "Adding missing database primary keys..."
 ${occ} db:add-missing-primary-keys
 
 _info "Converting InnoDB tables to DYNAMIC row format..."
-mysql "${DB_NAME}" -Bse "SELECT CONCAT('ALTER TABLE \`', TABLE_NAME, '\` ROW_FORMAT=DYNAMIC;') FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND ENGINE = 'InnoDB' AND NOT LOWER(ROW_FORMAT) LIKE '%dynamic%' " | while read command
+mysql "${DB_NAME}" -Bse "SELECT CONCAT('ALTER TABLE \`', TABLE_NAME, '\` ROW_FORMAT=DYNAMIC;') FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND ENGINE = 'InnoDB' AND NOT LOWER(ROW_FORMAT) LIKE '%dynamic%' " | while read -r command
   do
     _info "Executing MySQL command: \"${command}\""
     echo "${command}" | mysql "${DB_NAME}"
@@ -212,18 +214,18 @@ _info "Checking core..."
 while :
   do
     [ -z "$(${occ} integrity:check-core)" ] && break
-    ${occ} integrity:check-core --output json | grep ^{ | jq -sRr '.EXTRA_FILE? | to_entries[] | select(.value.expected == "") | .key' | xargs -i find . -path './{}' | xargs -i rm -v "{}"
+    ${occ} integrity:check-core --output json | grep "^{" | jq -sRr '.EXTRA_FILE? | to_entries[] | select(.value.expected == "") | .key' | xargs -I{} find . -path './{}' | xargs -I{} rm -v "{}"
   done
 
 _info "Checking apps..."
-${occ} app:list --output json | grep ^{ | jq -r '.enabled, .disabled | keys[]' | while read app
+${occ} app:list --output json | grep "^{" | jq -r '.enabled, .disabled | keys[]' | while read -r app
   do
     while :
       do
-        list=$(${occ} integrity:check-app --output json ${app} | grep ^{ | jq -sRr 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
+        list=$(${occ} integrity:check-app --output json "${app}" | grep "^{" | jq -sRr 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
         [ -z "${list}" ] && break
         _info "Removing leftover \"extra\" files of app \"${app}\"..."
-        echo "${list}" | xargs -i find . -path './apps/'${app}'/{}' | xargs -i rm -v "{}"
+        echo "${list}" | xargs -I{} find . -path './apps/'"${app}"'/{}' | xargs -I{} rm -v "{}"
       done
   done
 
@@ -234,8 +236,8 @@ ${occ} app_api:app:update --all
 [ -n "${VERSION}" ] && {
   _info "Finalizing update to version ${VERSION}..."
   _maintenance_enable
-  ${occ} migrations:preview ${VERSION}
-  ${occ} migrations:execute ${VERSION}
+  ${occ} migrations:preview "${VERSION}"
+  ${occ} migrations:execute "${VERSION}"
   _maintenance_disable
   }
 
