@@ -214,7 +214,7 @@ _info "Checking core..."
 while :
   do
     [ -z "$(${occ} integrity:check-core)" ] && break
-    ${occ} integrity:check-core --output json | grep "^{" | jq -sRr '.EXTRA_FILE? | to_entries[] | select(.value.expected == "") | .key' | xargs -I{} find . -path './{}' | xargs -I{} rm -v "{}"
+    ${occ} integrity:check-core --output json | grep "^{" | jq -r '.EXTRA_FILE? | to_entries[] | select(.value.expected == "") | .key' | xargs -I{} find . -path './{}' | xargs -I{} rm -v "{}"
   done
 
 _info "Checking apps..."
@@ -222,7 +222,7 @@ ${occ} app:list --output json | grep "^{" | jq -r '.enabled, .disabled | keys[]'
   do
     while :
       do
-        list=$(${occ} integrity:check-app --output json "${app}" | grep "^{" | jq -sRr 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
+        list=$(${occ} integrity:check-app --output json "${app}" | grep "^{" | jq -r 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
         [ -z "${list}" ] && break
         _info "Removing leftover \"extra\" files of app \"${app}\"..."
         echo "${list}" | xargs -I{} find . -path './apps/'"${app}"'/{}' | xargs -I{} rm -v "{}"
