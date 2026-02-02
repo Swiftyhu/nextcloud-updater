@@ -222,7 +222,7 @@ ${occ} app:list --output json | grep "^{" | jq -r '.enabled, .disabled | keys[]'
   do
     while :
       do
-        list=$(${occ} integrity:check-app --output json "${app}" | grep "^{" | jq -r 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
+        list=$(${occ} integrity:check-app --output json "${app}" | grep "^{" | jq -sRr 'fromjson? | .EXTRA_FILE? | to_entries[]? | select(.value.expected == "") | .key')
         [ -z "${list}" ] && break
         _info "Removing leftover \"extra\" files of app \"${app}\"..."
         echo "${list}" | xargs -I{} find . -path './apps/'"${app}"'/{}' | xargs -I{} rm -v "{}"
